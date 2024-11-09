@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create and View .QI File</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+            text-align: center;
+        }
+
+        h2 {
+            color: #333;
+        }
+
+        .container {
+            width: 80%;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .file-input, .save-button, .view-button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        .file-input {
+            margin-top: 40px;
+        }
+
+        .canvas-container {
+            margin-top: 20px;
+            display: inline-block;
+            border: 1px solid #ddd;
+            padding: 10px;
+            background-color: #fff;
+        }
+
+        #canvas {
+            border: 1px solid #000;
+            margin-top: 10px;
+        }
+
+        .btn-container {
+            margin-top: 30px;
+        }
+
+        .file-preview {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-top: 30px;
+        }
+
+        .file-preview img {
+            max-width: 400px;
+            max-height: 400px;
+        }
+
+        .file-preview div {
+            margin-top: 20px;
+            font-size: 16px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create or View .QI Files</h2>
+        
+        <!-- File Upload Section -->
+        <form id="uploadForm">
+            <input type="file" id="imageInput" accept="image/*" class="file-input"/>
+            <button type="submit" class="file-input">Upload Image</button>
+        </form>
+
+        <!-- Canvas Area for Image Preview -->
+        <div class="canvas-container">
+            <canvas id="canvas" width="400" height="400"></canvas>
+        </div>
+
+        <div class="btn-container">
+            <button id="saveQIFileBtn" class="save-button">Save as .QI File</button>
+        </div>
+
+        <!-- File View Section -->
+        <div class="file-preview">
+            <input type="file" id="qiFileInput" accept=".QI" class="file-input" />
+            <button class="view-button" id="viewQIFileBtn">View .QI File</button>
+        </div>
+
+        <!-- Preview Image from .QI -->
+        <div id="previewArea" class="file-preview">
+            <img id="previewImage" src="" alt="Preview" style="display: none;" />
+        </div>
+    </div>
+
+    <script>
+        // Function to handle the file input and convert the image to base64
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+
+                reader.onload = function(e) {
+                    const img = new Image();
+                    img.onload = function() {
+                        // Draw the uploaded image onto the canvas
+                        const canvas = document.getElementById('canvas');
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous content
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                    };
+                    img.src = e.target.result;
+                };
+
+                reader.readAsDataURL(file); // Read the image as a Data URL (base64)
+            }
+        }
+
+        // Event listener for the file input (image upload)
+        document.getElementById('imageInput').addEventListener('change', handleImageUpload);
+
+        // Function to save the canvas image as a .QI file
+        document.getElementById('saveQIFileBtn').onclick = function() {
+            const canvas = document.getElementById('canvas');
+            const imageData = canvas.toDataURL('image/png'); // Convert canvas to base64 image data
+
+            // Get the base64 part of the Data URL
+            const base64Image = imageData.split(',')[1];
+
+            // Create a Blob from the base64 string (for saving as a file)
+            const blob = new Blob([base64Image], { type: 'text/plain' });
+
+            // Create a link to download the file
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = 'image.QI'; // Name the downloaded file with .QI extension
+            link.click();
+        };
+
+        // Function to load and display .QI file (base64 image)
+        document.getElementById('viewQIFileBtn').onclick = function() {
+            const fileInput = document.getElementById('qiFileInput');
+            const file = fileInput.files[0];
+
+            if (file && file.name.endsWith('.QI')) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    // Read the file as text
+                    const base64Image = event.target.result;
+
+                    // Decode the base64 string and display the image in the canvas
+                    const img = new Image();
+                    img.onload = function() {
+                        const canvas = document.getElementById('canvas');
+                        const ctx = canvas.getContext('2d');
+                        ctx.clearRect(0, 0, canvas.width, canvas.height); // Clear previous content
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+                        // Also display the preview image for the .QI file
+                        const previewImg = document.getElementById('previewImage');
+                        previewImg.src = 'data:image/png;base64,' + base64Image;
+                        previewImg.style.display = 'block'; // Show the preview image
+                    };
+
+                    // Set the base64-encoded image string as the image source
+                    img.src = 'data:image/png;base64,' + base64Image;
+                };
+                reader.readAsText(file); // Read the file as text (base64-encoded string)
+            } else {
+                alert('Please upload a valid .QI file.');
+            }
+        };
+    </script>
+</body>
+</html>
